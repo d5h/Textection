@@ -224,7 +224,7 @@ main(int argc, char **argv)
 
   std::vector<std::string> args;
   std::vector<double> params;
-  params.push_back(16);
+  params.push_back(8);
   parse_args(argv + 1, params, args);
 
   for (size_t n = 0; n < args.size(); ++n) {
