@@ -1,5 +1,6 @@
 images/
 *.o
+features
 train
 objs.sqlite
 objs.sqlite.bak

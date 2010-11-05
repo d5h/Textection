@@ -1,6 +1,7 @@
 #ifndef SQL_INCLUDED
 #define SQL_INCLUDED 1
 
+#include <iostream>
 #include <string>
 
 #include <sqlite3.h>
