@@ -1,4 +1,5 @@
 #include <cassert>
+#include <set>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -67,25 +68,30 @@ struct obj_desc_t {
   int x, y, c;
 };
 
-typedef std::vector<obj_desc_t> obj_desc_vec_t;
+static bool operator <(const obj_desc_t &o1, const obj_desc_t &o2)
+{
+  return o1.y < o2.y || (o1.y == o2.y && o1.x < o2.x);
+}
+
+typedef std::set<obj_desc_t> obj_desc_set_t;
 
 static int
 load_descriptors_callback(void *ptr, int ncolumns, char **text, char **names)
 {
-  obj_desc_vec_t *descriptors = static_cast<obj_desc_vec_t *>(ptr);
+  obj_desc_set_t *descriptors = static_cast<obj_desc_set_t *>(ptr);
   assert(ncolumns == 3);
   obj_desc_t desc;
   desc.x = boost::lexical_cast<int>(text[0]);
   desc.y = boost::lexical_cast<int>(text[1]);
   desc.c = boost::lexical_cast<int>(text[2]);
-  descriptors->push_back(desc);
+  descriptors->insert(desc);
   return 0;
 }
 
 static void
 load_object_descriptors(const std::string &table_name,
                         sqlite3 *db,
-                        obj_desc_vec_t &descriptors)
+                        obj_desc_set_t &descriptors)
 {
   std::stringstream buffer(
     "SELECT x, y, char FROM '",
@@ -104,7 +110,7 @@ process_table(const std::string &name, sqlite3 *db)
   std::vector<double> params;
   std::string filename = deconstruct_table_name(name, params);
 
-  obj_desc_vec_t descriptors;
+  obj_desc_set_t descriptors;
   load_object_descriptors(name, db, descriptors);
 
   cv::Mat img = cv::imread(filename);
