@@ -2,3 +2,4 @@ images/
 *.o
 train
 objs.sqlite
+objs.sqlite.bak

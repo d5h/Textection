@@ -5,7 +5,7 @@ LINK = $(CC)
 
 all: train
 
-train: train.o objfind.o
+train: image.o objfind.o sql.o train.o
 	$(LINK) -lcv -lcvaux -lsqlite3 $^ -o $@
 
 clean:

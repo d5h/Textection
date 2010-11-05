@@ -13,39 +13,17 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
-#include <sqlite3.h>
-
+#include "image.h"
 #include "keycode.h"
-#include "objfind.h"
+#include "sql.h"
 
 std::string window_name = "Textection training";
-sqlite3 *db;
 
 const std::ios_base::openmode SS_BUFFER_MODE =
   std::stringstream::ate | std::stringstream::out;
 
-#define SQL_CHECK(code, expected)                               \
-  do {                                                          \
-    int sql_check_code = (code);                                \
-    if (sql_check_code != (expected)) {                         \
-      std::cerr << "Sqlite3 fail: " __FILE__ ":"                \
-                <<  __LINE__ << ": "                            \
-                << sql_check_code << std::endl;                 \
-      std::exit(1);                                             \
-    }                                                           \
-  } while (0)
-
-#define SQL_OK(code) SQL_CHECK(code, SQLITE_OK)
-
-static void
-close_db(void)
-{
-  if (db)
-    sqlite3_close(db);
-}
-
 static int
-get_key(void)
+get_key()
 {
   int key = cv::waitKey();
   if (key_code(key) == ESC_CODE)
@@ -118,26 +96,6 @@ parse_args(char **argv, std::vector<double> &params, std::vector<std::string> &a
   }
 }
 
-static void
-truncColors(cv::Mat &m, int ncolors)
-{
-  assert(m.type() == CV_8UC1);
-  uchar n = 256 / ncolors;
-
-  cv::Size size = m.size();
-  if (m.isContinuous()) {
-    size.width *= size.height;
-    size.height = 1;
-  }
-
-  for (int i = 0; i < size.height; ++i) {
-    uchar *p = m.ptr(i);
-    for (int j = 0; j < size.width; ++j) {
-      p[j] = (p[j] / n) * n;
-    }
-  }
-}
-
 static std::string
 construct_table_name(const std::string &filename,
                      const std::vector<double> &params)
@@ -194,16 +152,8 @@ process_img(const std::string &name, const std::vector<double> &params,
   create_object_table(table_name, db);
 
   cv::Mat img = cv::imread(name);
-  cv::Mat final, gray, pyrd, pyru;
-  cv::pyrDown(img, pyrd);
-  cv::pyrUp(pyrd, pyru);
-  cv::cvtColor(pyru, gray, CV_BGR2GRAY);
-  cv::equalizeHist(gray, final);
-  truncColors(final, params[0]);
-
   std::vector<Obj> objs;
-  objfind(final, objs);
-  sortobjs(objs);
+  get_sorted_objects_from_image(img, objs, params);
 
   bool skip = false;
   for (size_t i = 0; i < objs.size() && !skip; ++i) {
@@ -216,9 +166,8 @@ process_img(const std::string &name, const std::vector<double> &params,
 int
 main(int argc, char **argv)
 {
-  int status = sqlite3_open("objs.sqlite", &db);
-  std::atexit(close_db);
-  SQL_OK(status);
+  sqlite3 *db;
+  SQL_OK(open_sql_db_and_ensure_close_on_exit("objs.sqlite", &db));
 
   cv::namedWindow(window_name, CV_WINDOW_AUTOSIZE);
 
@@ -227,10 +176,8 @@ main(int argc, char **argv)
   params.push_back(8);
   parse_args(argv + 1, params, args);
 
-  for (size_t n = 0; n < args.size(); ++n) {
-    std::cout << args[n] << std::endl;
+  for (size_t n = 0; n < args.size(); ++n)
     process_img(args[n], params, db);
-  }
 
   return 0;
 }
