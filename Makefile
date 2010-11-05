@@ -6,7 +6,7 @@ LINK = $(CC)
 all: train
 
 train: train.o objfind.o
-	$(LINK) -lcv -lcvaux $^ -o $@
+	$(LINK) -lcv -lcvaux -lsqlite3 $^ -o $@
 
 clean:
 	rm -f *.o train
