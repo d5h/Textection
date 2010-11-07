@@ -5,7 +5,7 @@ LINK = $(CC)
 
 all: features train
 
-features: features.o image.o objfind.o sql.o
+features: features.o image.o objfind.o posfeatures.o sql.o
 	$(LINK) -lcv -lcvaux -lsqlite3 $^ -o $@
 
 train: image.o objfind.o sql.o train.o

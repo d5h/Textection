@@ -3,7 +3,8 @@
 
 #include <vector>
 
-//namespace objfind {
+#define CV_NO_BACKWARD_COMPATIBILITY
+#include <opencv/cv.h>
 
 static const unsigned int RUN_TOP = 1;
 static const unsigned int RUN_BOTTOM = 2;
@@ -30,7 +31,5 @@ void objfind(const cv::Mat &img, std::vector<Obj> &objs);
 void fillobj(cv::Mat &img, const Obj &obj, cv::Scalar color);
 void fillgaps(const Obj &src, Obj &dst);
 void sortobjs(std::vector<Obj> &objs);
-
-//}  // namespace objfind
 
 #endif  // OBJFIND_INCLUDED

@@ -125,10 +125,11 @@ struct process_data_t {
 
 static void
 run_feature(FeatureData &data, const obj_desc_set_t &descriptors,
-            const Obj &obj)
+            objs_t &objs, size_t subject)
 {
-  double result = data.feature->describe(obj);
+  double result = data.feature->describe(objs, subject);
 
+  const Obj &obj = objs[subject];
   obj_desc_t key;
   key.x = obj.runs[0].start;
   key.y = obj.runs[0].row;
@@ -158,7 +159,7 @@ process_table(const std::string &name, void *ptr)
 
   for (size_t f = 0; f < data->features.size(); ++f) {
     for (size_t j = 0; j < objs.size(); ++j)
-      run_feature(data->features[f], descriptors, objs[j]);
+      run_feature(data->features[f], descriptors, objs, j);
   }
 }
 
@@ -216,6 +217,8 @@ main()
   process_data_t proc_data;
   proc_data.db = db;
   proc_data.features.push_back(FeatureData(new AspectRatioFeature()));
+  proc_data.features.push_back(FeatureData(new TopPositionFeature()));
+  proc_data.features.push_back(FeatureData(new BottomPositionFeature()));
 
   for_each_table(db, process_table, &proc_data);
   compile_stats(proc_data.features);
