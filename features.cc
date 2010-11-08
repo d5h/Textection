@@ -1,4 +1,5 @@
 #include <cassert>
+#include <cctype>
 #include <map>
 #include <set>
 #include <sstream>
@@ -128,9 +129,9 @@ output_data(objs_t &objs, size_t subject,
   obj_desc_set_t::iterator desc_iter = descriptors.find(key);
 
   if (desc_iter == descriptors.end())
-    std::cout << "junk" << std::endl;
+    std::cout << 0 << std::endl;
   else
-    std::cout << static_cast<char>(desc_iter->c) << std::endl;
+    std::cout << desc_iter->c << std::endl;
 }
 
 static void
@@ -168,8 +169,12 @@ main()
     std::cout << "@ATTRIBUTE " << proc_data.features[i]->name()
               << " NUMERIC\n";
   }
-  std::cout << "@ATTRIBUTE class STRING\n\n"
-            << "@DATA" << std::endl;
+  std::cout << "@ATTRIBUTE class {0";
+  for (int c = 0; c < 128; ++c) {
+    if (std::isgraph(c))
+      std::cout << "," << c;
+  }
+  std::cout << "}\n\n" << "@DATA" << std::endl;
 
   for_each_table(db, process_table, &proc_data);
 
