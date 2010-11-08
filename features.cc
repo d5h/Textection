@@ -106,28 +106,20 @@ load_object_descriptors(const std::string &table_name,
   SQL_OK(sqlite3_exec(db, stmt, load_descriptors_callback, &descriptors, 0));
 }
 
-typedef std::map<int, std::vector<double> > char_result_map_t;
-
-struct FeatureData {
-  Feature *feature;
-  char_result_map_t char_results;
-  std::vector<double> junk_results;
-
-  FeatureData(Feature *f)
-    : feature(f)
-  { }
-};
-
 struct process_data_t {
   sqlite3 *db;
-  std::vector<FeatureData> features;
+  std::vector<Feature *> features;
 };
 
 static void
-run_feature(FeatureData &data, const obj_desc_set_t &descriptors,
-            objs_t &objs, size_t subject)
+output_data(objs_t &objs, size_t subject,
+            const std::vector<Feature *> &features,
+            const obj_desc_set_t &descriptors)
 {
-  double result = data.feature->describe(objs, subject);
+  for (size_t i = 0; i < features.size(); ++i) {
+    double result = features[i]->describe(objs, subject);
+    std::cout << result << ",";
+  }
 
   const Obj &obj = objs[subject];
   obj_desc_t key;
@@ -136,11 +128,9 @@ run_feature(FeatureData &data, const obj_desc_set_t &descriptors,
   obj_desc_set_t::iterator desc_iter = descriptors.find(key);
 
   if (desc_iter == descriptors.end())
-    data.junk_results.push_back(result);
-  else {
-    int c = desc_iter->c;
-    data.char_results[c].push_back(result);
-  }
+    std::cout << "junk" << std::endl;
+  else
+    std::cout << static_cast<char>(desc_iter->c) << std::endl;
 }
 
 static void
@@ -157,55 +147,8 @@ process_table(const std::string &name, void *ptr)
   std::vector<Obj> objs;
   get_sorted_objects_from_image(img, objs, params);
 
-  for (size_t f = 0; f < data->features.size(); ++f) {
-    for (size_t j = 0; j < objs.size(); ++j)
-      run_feature(data->features[f], descriptors, objs, j);
-  }
-}
-
-struct stats_t {
-  double ave, dev;
-};
-
-static stats_t
-calc_stats(const std::vector<double> &x)
-{
-  stats_t stats;
-  double n = x.size();
-
-  stats.ave = 0.;
-  for (size_t i = 0; i < x.size(); ++i)
-    stats.ave += x[i] / n;
-
-  if (n == 1.)
-    stats.dev = -1.;
-  else {
-    stats.dev = 0.;
-    for (size_t i = 0; i < x.size(); ++i) {
-      double xd = x[i] - stats.ave;
-      xd *= xd;
-      stats.dev += xd / (n - 1);
-    }
-  }
-
-  return stats;
-}
-
-static void
-compile_stats(const std::vector<FeatureData> &data)
-{
-  for (size_t i = 0; i < data.size(); ++i) {
-    const FeatureData &f = data[i];
-    std::cout << f.feature->name() << ":\n";
-    char_result_map_t::const_iterator iter;
-    for (iter = f.char_results.begin(); iter != f.char_results.end(); ++iter) {
-      char c = iter->first;
-      stats_t stats = calc_stats(iter->second);
-      std::cout << "'" << c << "': "
-                << "average=" << stats.ave << "; "
-                << "std dev=" << stats.dev << "\n";
-    }
-  }
+  for (size_t i = 0; i < objs.size(); ++i)
+    output_data(objs, i, data->features, descriptors);
 }
 
 int
@@ -216,12 +159,19 @@ main()
 
   process_data_t proc_data;
   proc_data.db = db;
-  proc_data.features.push_back(FeatureData(new AspectRatioFeature()));
-  proc_data.features.push_back(FeatureData(new TopPositionFeature()));
-  proc_data.features.push_back(FeatureData(new BottomPositionFeature()));
+  proc_data.features.push_back(new AspectRatioFeature());
+  proc_data.features.push_back(new TopPositionFeature());
+  proc_data.features.push_back(new BottomPositionFeature());
+
+  std::cout << "@RELATION textection\n" << std::endl;
+  for (size_t i = 0; i < proc_data.features.size(); ++i) {
+    std::cout << "@ATTRIBUTE " << proc_data.features[i]->name()
+              << " NUMERIC\n";
+  }
+  std::cout << "@ATTRIBUTE class STRING\n\n"
+            << "@DATA" << std::endl;
 
   for_each_table(db, process_table, &proc_data);
-  compile_stats(proc_data.features);
 
   return 0;
 }
