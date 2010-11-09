@@ -7,12 +7,11 @@
 #include <string>
 #include <vector>
 
-#include <boost/lexical_cast.hpp>
-
 #define CV_NO_BACKWARD_COMPATIBILITY
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
+#include "args.h"
 #include "image.h"
 #include "keycode.h"
 #include "sql.h"
@@ -66,33 +65,6 @@ feedback(const cv::Mat &img, const Obj &obj, sqlite3 *db,
       insert_obj(obj, code, db, table_name);
       return false;
     }
-  }
-}
-
-static void
-parse_args(char **argv, std::vector<double> &params, std::vector<std::string> &args)
-{
-  size_t i = 0;
-  const size_t NOWARN = std::numeric_limits<size_t>::max();
-
-  for ( ; *argv; ++argv) {
-    const char *s = *argv;
-    bool num = true;
-    for ( ; *s; ++s) {
-      if (! (isdigit(*s) || *s == '.')) {
-        num = false;
-        break;
-      }
-    }
-    if (num) {
-      if (i < params.size())
-        params[i] = boost::lexical_cast<double>(*argv);
-      else if (i != NOWARN) {
-        i = NOWARN;
-        std::cerr << "Too many numerical parameters" << std::endl;
-      }
-    } else
-      args.push_back(*argv);
   }
 }
 
@@ -173,7 +145,7 @@ main(int argc, char **argv)
 
   std::vector<std::string> args;
   std::vector<double> params;
-  params.push_back(8);
+  params.push_back(ARG_DEFAULT_1);
   parse_args(argv + 1, params, args);
 
   for (size_t n = 0; n < args.size(); ++n)

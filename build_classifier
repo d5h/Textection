@@ -1,0 +1,7 @@
+#!/bin/sh
+
+./features >objs.arff &&
+./multiboost --fileformat arff --train objs.arff 20 --verbose 0 \
+    --learnertype SingleStumpLearner \
+    --outputinfo info.dta --shypname strongHypothesis.xml &&
+./generalize.py strongHypothesis.xml

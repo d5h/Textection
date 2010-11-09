@@ -47,12 +47,12 @@ def writeSource(weakhyp):
                           (n, alpha, thresh, featureName, vVal, vVal))
         out.write('  double max = votes[0];\n'
                   '  size_t best = 0;\n'
-                  '  for (size_t i = 0; i < %s; ++i)\n'
+                  '  for (size_t i = 1; i < %s; ++i)\n'
                   '    if (max < votes[i]) {\n'
                   '      max = votes[i];\n'
                   '      best = i;\n'
                   '    }\n'
-                  '  return classes[best];\n'
+                  '  return 0 < max ? classes[best] : 0;\n'
                   '}\n' % numClasses)
 
 def main(filename):

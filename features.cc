@@ -117,11 +117,6 @@ output_data(objs_t &objs, size_t subject,
             const std::vector<Feature *> &features,
             const obj_desc_set_t &descriptors)
 {
-  for (size_t i = 0; i < features.size(); ++i) {
-    double result = features[i]->describe(objs, subject);
-    std::cout << result << ",";
-  }
-
   const Obj &obj = objs[subject];
   obj_desc_t key;
   key.x = obj.runs[0].start;
@@ -129,9 +124,13 @@ output_data(objs_t &objs, size_t subject,
   obj_desc_set_t::iterator desc_iter = descriptors.find(key);
 
   if (desc_iter == descriptors.end())
-    std::cout << 0 << std::endl;
-  else
-    std::cout << desc_iter->c << std::endl;
+    return;
+
+  for (size_t i = 0; i < features.size(); ++i) {
+    double result = features[i]->describe(objs, subject);
+    std::cout << result << ",";
+  }
+  std::cout << desc_iter->c << std::endl;
 }
 
 static void

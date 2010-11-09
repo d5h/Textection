@@ -2,7 +2,10 @@ images/
 *.o
 classifier.cc
 classifier.h
+detect
 features
+info.dta
+multiboost
 train
 objs.arff
 objs.sqlite
