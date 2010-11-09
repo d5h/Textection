@@ -1,6 +1,10 @@
 images/
 *.o
+classifier.cc
+classifier.h
 features
 train
+objs.arff
 objs.sqlite
 objs.sqlite.bak
+strongHypothesis.xml
